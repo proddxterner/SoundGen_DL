@@ -1,0 +1,20 @@
+Audio Data:
+
+Basic:
+Produced by vibration of objects -- determines oscillation of air molecules
+Waveform given by frequency and amplitude
+
+How to get data?
+- decompose complex sound into sum of sine Waves oscillating at different frequencies -- Fourier transform
+
+Fourier Transform:
+Conversion from time - Domain graph to frequency - Domain "Spectrum"
+	- NO TIME INFORMATION (not good)
+
+Usage of FT in Deep Learning:
+
+Short Time Fourier Transform (STFT)
+- Several FFT at different intervals
+- Time information GIVEN
+- Frame size fixed
+- Spectrogram (time, frequency, magnitude) -- all relevant data for data set training
