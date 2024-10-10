@@ -1,7 +1,6 @@
 # To Do
--Understand and start coding Autoencoder in Python & Keras
 
-  -Training Autoencoder
+-Building a Variational Autoencoder + training
 
 -Determine dataset
 
