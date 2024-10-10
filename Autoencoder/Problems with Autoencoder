@@ -1,0 +1,14 @@
+Problems with Autoencoders for generation purposes:
+
+If we take a look at the plot of the learned representation following problems are visible:
+
+-Plot isn't symmetrical around origin
+
+-Some labels are represented over small areas while other labels are represented on large areas --> No diversity
+
+-Gaps between coloured points --> Data will be generated poorly
+
+
+How to solve problems?
+
+USE VARIATIONAL AUTOENCODER (VAE)
