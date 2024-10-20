@@ -1,7 +1,4 @@
 # To Do
 
--Building a Variational Autoencoder + training
+-Fixing Variational Autoencoder + training
 
--Determine dataset
-
-  -Preprocessing dataset
