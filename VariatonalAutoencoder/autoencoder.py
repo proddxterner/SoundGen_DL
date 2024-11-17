@@ -1,35 +1,32 @@
 import os
+os.environ["KERAS_BACKEND"] = "tensorflow"
 import pickle
-import math
-
-from tensorflow.keras import Model
-from tensorflow.keras.layers import Input, Conv2D, ReLU, BatchNormalization, \
-    Flatten, Dense, Reshape, Conv2DTranspose, Activation, Lambda
-from tensorflow.keras import backend as K
-import tensorflow.keras.ops as ops
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import MeanSquaredError
 import numpy as np
+import keras
 import tensorflow as tf
+from keras import Model
+from keras.layers import Input, Conv2D, ReLU, BatchNormalization, Flatten, Dense, Reshape, Conv2DTranspose, Activation, Lambda
+from keras.optimizers import Adam
+#from tensorflow.keras import Model
+#from tensorflow.keras.layers import Input, Conv2D, ReLU, BatchNormalization, Flatten, Dense, Reshape, Conv2DTranspose, Activation, Lambda
+#from tensorflow.keras.optimizers import Adam
+import keras.random
 
-
-#tf.compat.v1.disable_eager_execution()
-
+tf.compat.v1.disable_eager_execution()
 
 class VAE:
-    #VAE represents a Deep Convolutional variational autoencoder architecture with mirrored encoder and decoder components
     
-    def __init__(self, #constructor of AE class
+    def __init__(self,
                  input_shape,
                  conv_filters,
                  conv_kernels,
                  conv_strides,
                  latent_space_dim):
-        self.input_shape = input_shape # [28, 28, 1]
-        self.conv_filters = conv_filters # [2, 4, 8]
-        self.conv_kernels = conv_kernels # [3, 5, 3]
-        self.conv_strides = conv_strides # [1, 2, 2]
-        self.latent_space_dim = latent_space_dim # 2
+        self.input_shape = input_shape
+        self.conv_filters = conv_filters
+        self.conv_kernels = conv_kernels
+        self.conv_strides = conv_strides
+        self.latent_space_dim = latent_space_dim
         self.reconstruction_loss_weight = 1000000
 
         self.encoder = None
@@ -47,7 +44,7 @@ class VAE:
         self.decoder.summary()
         self.model.summary()
 
-    def compile(self, learning_rate=0.0001): #need to compile before using & training in keras
+    def compile(self, learning_rate=0.0001):
         optimizer = Adam(learning_rate=learning_rate)
         self.model.compile(optimizer=optimizer,
                            loss=self._calculate_combined_loss,
@@ -55,7 +52,8 @@ class VAE:
                                     self._calculate_kl_loss])
 
     def train(self, x_train, batch_size, num_epochs):
-        self.model.fit(x_train,
+        self.model.fit(
+                       x_train,
                        x_train,
                        batch_size=batch_size,
                        epochs=num_epochs,
@@ -74,7 +72,7 @@ class VAE:
         reconstructed_images = self.decoder.predict(latent_representations)
         return reconstructed_images, latent_representations
 
-    @classmethod #generic function without "self"
+    @classmethod
     def load(cls, save_folder="."):
         parameters_path = os.path.join(save_folder, "parameters.pkl")
         with open(parameters_path, "rb") as f:
@@ -86,21 +84,20 @@ class VAE:
 
     def _calculate_combined_loss(self, y_target, y_predicted):
         reconstruction_loss = self._calculate_reconstruction_loss(y_target, y_predicted)
-        kl_loss = self._calculate_kl_loss(y_target, y_predicted)
-        combined_loss = self.reconstruction_loss_weight * reconstruction_loss\
-                                                         + kl_loss
+        kl_loss = self._calculate_kl_loss()
+        combined_loss = self.reconstruction_loss_weight * reconstruction_loss + kl_loss
         return combined_loss
 
-    def _calculate_reconstruction_loss(self, y_target, y_predicted): #Keras expects output target & output that has been predicted by model
+    def _calculate_reconstruction_loss(self, y_target, y_predicted):
         error = y_target - y_predicted
-        reconstruction_loss = tf.reduce_mean(ops.square(error), axis=[1, 2, 3])
+        reconstruction_loss = keras.ops.mean(keras.ops.square(error), axis=[1, 2, 3])
         return reconstruction_loss
-
-    def _calculate_kl_loss(self, y_target, y_predicted):
-        kl_loss = -0.5 * tf.reduce_sum(1 + self.log_variance - tf.square(self.mu) -
-                               tf.exp(self.log_variance), axis=1)
-        return kl_loss
     
+    def _calculate_kl_loss(self):
+        # KL divergence calculated from the model's mu and log_variance (no longer using them directly here)
+        kl_loss = -0.5 * keras.ops.sum(1 + self.log_variance - keras.ops.square(self.mu) - keras.ops.exp(self.log_variance), axis=1)
+        return keras.ops.mean(kl_loss)  # You may also average it if you like
+
     def _create_folder_if_it_doesnt_exist(self, folder):
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -118,7 +115,7 @@ class VAE:
             pickle.dump(parameters, f)
 
     def _save_weights(self, save_folder):
-        save_path = os.path.join(save_folder, "weights.h5") #h5 is keras format for storing weights using keras API
+        save_path = os.path.join(save_folder, "weights.h5")
         self.model.save_weights(save_path)
 
     def _build(self):
@@ -129,7 +126,7 @@ class VAE:
     def _build_autoencoder(self):
         model_input = self._model_input
         model_output = self.decoder(self.encoder(model_input))
-        self.model = Model(model_input, model_output, name="autoencoder")
+        self.model = keras.Model(model_input, model_output, name="autoencoder")
 
     def _build_decoder(self):
         decoder_input = self._add_decoder_input()
@@ -140,12 +137,10 @@ class VAE:
         self.decoder = Model(decoder_input, decoder_output, name="decoder")
 
     def _add_decoder_input(self):
-        # Corrected shape as a tuple
         return Input(shape=(self.latent_space_dim,), name="decoder_input")
 
     def _add_dense_layer(self, decoder_input):
-        # Use _shape_before_bottleneck to calculate the number of neurons
-        num_neurons = np.prod(self._shape_before_bottleneck) # [1, 2, 4] -> 8
+        num_neurons = np.prod(self._shape_before_bottleneck)
         dense_layer = Dense(num_neurons, name="decoder_dense")(decoder_input)
         return dense_layer
 
@@ -153,8 +148,6 @@ class VAE:
         return Reshape(self._shape_before_bottleneck)(dense_layer)
 
     def _add_conv_transpose_layers(self, x):
-        # Add conv transpose blocks
-        # loop through all the conv layers in reverse order and stop at the first layer
         for layer_index in reversed(range(1, self._num_conv_layers)):
             x = self._add_conv_transpose_layer(layer_index, x)
         return x
@@ -196,14 +189,12 @@ class VAE:
         return Input(shape=self.input_shape, name="encoder_input")
 
     def _add_conv_layers(self, encoder_input):
-        # Create  convolutional blocks in encoder
         x = encoder_input
         for layer_index in range(self._num_conv_layers):
             x = self._add_conv_layer(layer_index, x)
         return x
 
     def _add_conv_layer(self, layer_index, x):
-        # Add a convolutional block to graph of layers consisting of conv 2d + ReLU + batch normalization
         layer_number = layer_index + 1
         conv_layer = Conv2D(
             filters=self.conv_filters[layer_index],
@@ -218,23 +209,20 @@ class VAE:
         return x
 
     def _add_bottleneck(self, x):
-        # Flatten data & add BN with Gaussian sampling (dense layer)
-        self._shape_before_bottleneck = K.int_shape(x)[1:] # Store shape (e.g., (7, 7, 64))
+        self._shape_before_bottleneck = (int(x.shape[1]), int(x.shape[2]), int(x.shape[3]))  # Get the shape dimensions
         x = Flatten()(x)
         self.mu = Dense(self.latent_space_dim, name="mu")(x)
-        self.log_variance = Dense(self.latent_space_dim,
-                                  name="log_variance")(x)
+        self.log_variance = Dense(self.latent_space_dim, name="log_variance")(x)
 
         def sample_point_from_normal_distribution(args):
             mu, log_variance = args
-            epsilon = tf.random.normal(shape=tf.shape(mu), mean=0.,
-                                      stddev=1.)
-            sampled_point = mu + tf.exp(log_variance / 2) * epsilon
+            epsilon = keras.random.normal(shape=keras.ops.shape(mu), mean=0., stddev=1.)
+            sampled_point = mu + keras.ops.exp(log_variance / 2) * epsilon
             return sampled_point
-        # Specify the output shape for Lambda
-        x = Lambda(sample_point_from_normal_distribution, output_shape = (self.latent_space_dim,),
-                   name="encoder_output")([self.mu, self.log_variance])
+
+        x = Lambda(sample_point_from_normal_distribution, output_shape=(self.latent_space_dim,), name="encoder_output")([self.mu, self.log_variance])
         return x
+
 
 
 if __name__ == "__main__":
@@ -242,7 +230,8 @@ if __name__ == "__main__":
         input_shape=(28, 28, 1),
         conv_filters=(32, 64, 64, 64),
         conv_kernels=(3, 3, 3, 3),
-        conv_strides=(1, 2, 2, 1),
+        conv_strides=(2, 2, 2, 2),
         latent_space_dim=2
     )
     autoencoder.summary()
+
