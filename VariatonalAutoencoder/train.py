@@ -14,13 +14,15 @@ SPECTROGRAMS_PATH = "C:/Users/Deterner/Dropbox/beats/! - AA Maturarbeit/Dataset/
 
 def load_dss(spectrograms_path):
     x_train = []
+    print(os.getcwd())
     for root, _, file_names in os.walk(spectrograms_path):
         for file_name in file_names:
             file_path = os.path.join(root, file_name)
             spectrogram = np.load(file_path) # (n_bins, n_frames, 1)
             x_train.append(spectrogram)
     x_train = np.array(x_train)
-    x_train = x_train[..., np.newaxis] # -> (10006/num_samples, 256, 64, 1)
+    if (len(x_train) > 0):
+        x_train = x_train[..., np.newaxis] # -> (10006/num_samples, 256, 64, 1)
     return x_train
 
 
@@ -40,5 +42,8 @@ def train(x_train, learning_rate, batch_size, epochs):
 
 if __name__ == "__main__":
     x_train = load_dss(SPECTROGRAMS_PATH)
-    autoencoder = train(x_train, LEARNING_RATE, BATCH_SIZE, EPOCHS)
-    autoencoder.save("model")
+    if (len(x_train) > 0):
+        autoencoder = train(x_train, LEARNING_RATE, BATCH_SIZE, EPOCHS)
+        autoencoder.save("model")
+    else:
+        print("No spectrograms found!!")
