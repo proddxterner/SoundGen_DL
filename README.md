@@ -1,4 +1,3 @@
-# To Do
-
--Fixing Variational Autoencoder + training
-
+- unzip archive ./VariatonalAutoencoder/Spectrograms.zip in the directory ./Dataset/Snares/Spectrograms
+- ⁠run autoencoder.py in ./VariatonalAutoencoder
+- ⁠run train.py in ./VariatonalAutoencoder
