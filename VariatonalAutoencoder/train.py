@@ -9,7 +9,7 @@ LEARNING_RATE = 0.0005
 BATCH_SIZE = 64
 EPOCHS = 150
 
-SPECTROGRAMS_PATH = "C:/Users/Deterner/Dropbox/beats/! - AA Maturarbeit/Dataset/Snares/Spectograms"
+SPECTROGRAMS_PATH = "../Dataset/Snares/Spectograms"
 
 
 def load_dss(spectrograms_path):
