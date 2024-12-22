@@ -8,7 +8,6 @@
 
 import os
 import pickle
-
 import librosa
 import numpy as np
 
@@ -31,7 +30,6 @@ class Loader:
 
 class Padder:
     #Padder  responsible to apply padding to array
-
     def __init__(self, mode="constant"):
         self.mode = mode
 
@@ -50,7 +48,6 @@ class Padder:
 
 class LogSpectrogramExtractor:
     #LogSpectrogramExtractor extracts log spectrograms (in dB) from time-series signal
-
     def __init__(self, frame_size, hop_length):
         self.frame_size = frame_size
         self.hop_length = hop_length
@@ -66,7 +63,6 @@ class LogSpectrogramExtractor:
 
 class MinMaxNormaliser:
     #MinMaxNormaliser applies min max normalisation to array
-
     def __init__(self, min_val, max_val):
         self.min = min_val
         self.max = max_val
@@ -84,7 +80,6 @@ class MinMaxNormaliser:
 
 class Saver:
     #saver responsible to save features and  min max values.
-
     def __init__(self, feature_save_dir, min_max_values_save_dir):
         self.feature_save_dir = feature_save_dir
         self.min_max_values_save_dir = min_max_values_save_dir
@@ -92,6 +87,7 @@ class Saver:
     def save_feature(self, feature, file_path):
         save_path = self._generate_save_path(file_path)
         np.save(save_path, feature)
+        return save_path
 
     def save_min_max_values(self, min_max_values):
         save_path = os.path.join(self.min_max_values_save_dir,
@@ -110,8 +106,6 @@ class Saver:
 
 
 class PreprocessingPipeline:
-
-
 
     def __init__(self):
         self.padder = None
@@ -140,13 +134,17 @@ class PreprocessingPipeline:
         self.saver.save_min_max_values(self.min_max_values)
 
     def _process_file(self, file_path):
-        signal = self.loader.load(file_path)
-        if self._is_padding_necessary(signal):
-            signal = self._apply_padding(signal)
-        feature = self.extractor.extract(signal)
-        norm_feature = self.normaliser.normalise(feature)
-        save_path = self.saver.save_feature(norm_feature, file_path)
-        self._store_min_max_value(save_path, feature.min(), feature.max())
+        try:
+            signal = self.loader.load(file_path)
+            if self._is_padding_necessary(signal):
+                signal = self._apply_padding(signal)
+            feature = self.extractor.extract(signal)
+            norm_feature = self.normaliser.normalise(feature)
+            save_path = self.saver.save_feature(norm_feature, file_path)
+            self._store_min_max_value(save_path, feature.min(), feature.max())
+        except Exception as e:
+            print(f"Error processing file {file_path}: {e}")
+        
 
     def _is_padding_necessary(self, signal):
         if len(signal) < self._num_expected_samples:
