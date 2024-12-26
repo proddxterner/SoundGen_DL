@@ -1,15 +1,15 @@
 import os
 
 import numpy as np
-
+import tensorflow as tf
 from autoencoder import VAE
 
 
-LEARNING_RATE = 0.0005
-BATCH_SIZE = 64
+LEARNING_RATE = 0.0001
+BATCH_SIZE = 32
 EPOCHS = 150
 
-SPECTROGRAMS_PATH = "../Dataset/Snares/Spectograms"
+SPECTROGRAMS_PATH = "Dataset/Snares/Spectograms"
 
 
 def load_dss(spectrograms_path):
