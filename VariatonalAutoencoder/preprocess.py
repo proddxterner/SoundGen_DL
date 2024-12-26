@@ -10,7 +10,8 @@ import os
 import pickle
 import librosa
 import numpy as np
-
+from glob import glob
+from tqdm.auto import tqdm
 
 class Loader:
     #Loader responsible for loading  audio file
@@ -126,11 +127,9 @@ class PreprocessingPipeline:
         self._num_expected_samples = int(loader.sample_rate * loader.duration)
 
     def process(self, audio_files_dir):
-        for root, _, files in os.walk(audio_files_dir): # look through all files
-            for file in files:
-                file_path = os.path.join(root, file)
-                self._process_file(file_path)
-                print(f"Processed file {file_path}")
+        for file_path in tqdm(glob(audio_files_dir+"/*")): # look through all files
+            self._process_file(file_path)
+            # print(f"Processed file {file_path}")
         self.saver.save_min_max_values(self.min_max_values)
 
     def _process_file(self, file_path):
@@ -169,9 +168,9 @@ if __name__ == "__main__":
     SAMPLE_RATE = 22050 
     MONO = True
 
-    SPECTROGRAMS_SAVE_DIR = "C:/Users/Deterner/Dropbox/beats/! - AA Maturarbeit/Dataset/Snares/Spectograms"
-    MIN_MAX_VALUES_SAVE_DIR = "C:/Users/Deterner/Dropbox/beats/! - AA Maturarbeit/Dataset/Snares/"
-    FILES_DIR = "C:/Users/Deterner/Dropbox/beats/! - AA Maturarbeit/Dataset/Snares/Audio"
+    SPECTROGRAMS_SAVE_DIR = "Dataset/Snares/Spectograms"
+    MIN_MAX_VALUES_SAVE_DIR = "Dataset/Snares/"
+    FILES_DIR = "Dataset/Snares/Audio"
 
     # instantiate all objects
     loader = Loader(SAMPLE_RATE, DURATION, MONO)
@@ -186,8 +185,4 @@ if __name__ == "__main__":
     preprocessing_pipeline.extractor = log_spectrogram_extractor
     preprocessing_pipeline.normaliser = min_max_normaliser
     preprocessing_pipeline.saver = saver
-
     preprocessing_pipeline.process(FILES_DIR)
-
-
-
