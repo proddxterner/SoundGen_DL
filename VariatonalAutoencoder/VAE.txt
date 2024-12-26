@@ -1,1 +1,1 @@
-VAE is not fully functional yet 
+
